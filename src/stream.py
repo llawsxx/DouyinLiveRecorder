@@ -38,7 +38,7 @@ def get_quality_index(quality) -> tuple:
 
 
 @trace_error_decorator
-async def get_douyin_stream_url(json_data: dict, video_quality: str, proxy_addr: str) -> dict:
+async def get_douyin_stream_url(json_data: dict, video_quality: str, proxy_addr: str, check_m3u8: bool) -> dict:
     anchor_name = json_data.get('anchor_name')
 
     result = {
@@ -62,11 +62,12 @@ async def get_douyin_stream_url(json_data: dict, video_quality: str, proxy_addr:
         video_quality, quality_index = get_quality_index(video_quality)
         m3u8_url = m3u8_url_list[quality_index]
         flv_url = flv_url_list[quality_index]
-        ok = await get_response_status(url=m3u8_url, proxy_addr=proxy_addr)
-        if not ok:
-            index = quality_index + 1 if quality_index < 4 else quality_index - 1
-            m3u8_url = m3u8_url_list[index]
-            flv_url = flv_url_list[index]
+        if check_m3u8:
+            ok = await get_response_status(url=m3u8_url, proxy_addr=proxy_addr)
+            if not ok:
+                index = quality_index + 1 if quality_index < 4 else quality_index - 1
+                m3u8_url = m3u8_url_list[index]
+                flv_url = flv_url_list[index]
         result |= {
             'is_live': True,
             'title': json_data['title'],
@@ -79,7 +80,7 @@ async def get_douyin_stream_url(json_data: dict, video_quality: str, proxy_addr:
 
 
 @trace_error_decorator
-async def get_tiktok_stream_url(json_data: dict, video_quality: str, proxy_addr: str) -> dict:
+async def get_tiktok_stream_url(json_data: dict, video_quality: str, proxy_addr: str, check_m3u8: bool) -> dict:
     if not json_data:
         return {"anchor_name": None, "is_live": False}
 
@@ -133,12 +134,13 @@ async def get_tiktok_stream_url(json_data: dict, video_quality: str, proxy_addr:
         m3u8_dict: dict = m3u8_url_list[quality_index]
 
         check_url = m3u8_dict.get('url') or flv_dict.get('url')
-        ok = await get_response_status(url=check_url, proxy_addr=proxy_addr, http2=False)
+        if check_m3u8:
+            ok = await get_response_status(url=check_url, proxy_addr=proxy_addr, http2=False)
 
-        if not ok:
-            index = quality_index + 1 if quality_index < 4 else quality_index - 1
-            flv_dict: dict = flv_url_list[index]
-            m3u8_dict: dict = m3u8_url_list[index]
+            if not ok:
+                index = quality_index + 1 if quality_index < 4 else quality_index - 1
+                flv_dict: dict = flv_url_list[index]
+                m3u8_dict: dict = m3u8_url_list[index]
 
         flv_url = flv_dict['url']
         m3u8_url = m3u8_dict['url']

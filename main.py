@@ -581,7 +581,7 @@ def start_record(url_data: tuple, count_variable: int = -1) -> None:
                         platform = '抖音直播'
                         with semaphore:
                             if 'v.douyin.com' not in record_url and '/user/' not in record_url:
-                                json_data = asyncio.run(spider.get_douyin_web_stream_data(
+                                json_data = asyncio.run(spider.get_douyin_stream_data(
                                     url=record_url,
                                     proxy_addr=proxy_address,
                                     cookies=dy_cookie))
@@ -591,7 +591,7 @@ def start_record(url_data: tuple, count_variable: int = -1) -> None:
                                     proxy_addr=proxy_address,
                                     cookies=dy_cookie))
                             port_info = asyncio.run(
-                                stream.get_douyin_stream_url(json_data, record_quality, proxy_address))
+                                stream.get_douyin_stream_url(json_data, record_quality, proxy_address, douyin_check_m3u8))
 
                     elif record_url.find("https://www.tiktok.com/") > -1:
                         platform = 'TikTok直播'
@@ -602,7 +602,7 @@ def start_record(url_data: tuple, count_variable: int = -1) -> None:
                                     proxy_addr=proxy_address,
                                     cookies=tiktok_cookie))
                                 port_info = asyncio.run(
-                                    stream.get_tiktok_stream_url(json_data, record_quality, proxy_address))
+                                    stream.get_tiktok_stream_url(json_data, record_quality, proxy_address, tiktok_check_m3u8))
                             else:
                                 logger.error("错误信息: 网络异常，请检查网络是否能正常访问TikTok平台")
 
@@ -1833,6 +1833,8 @@ while True:
     enable_proxy_platform_list = enable_proxy_platform.replace('，', ',').split(',') if enable_proxy_platform else None
     extra_enable_proxy = read_config_value(config, '录制设置', '额外使用代理录制的平台(逗号分隔)', '')
     extra_enable_proxy_platform_list = extra_enable_proxy.replace('，', ',').split(',') if extra_enable_proxy else None
+    douyin_check_m3u8 = options.get(read_config_value(config, '录制设置', '抖音检测m3u8有效性', "否"), False)
+    tiktok_check_m3u8 = options.get(read_config_value(config, '录制设置', 'tiktok检测m3u8有效性', "否"), False)
     live_status_push = read_config_value(config, '推送配置', '直播状态推送渠道', "")
     dingtalk_api_url = read_config_value(config, '推送配置', '钉钉推送接口链接', "")
     xizhi_api_url = read_config_value(config, '推送配置', '微信推送接口链接', "")
